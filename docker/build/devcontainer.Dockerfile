@@ -50,14 +50,14 @@ RUN apt update && apt-get install -y --no-install-recommends ca-certificates wge
 # When cuda packages are installed below, the keyring will be reinstalled.
 RUN rm -f /etc/apt/sources.list.d/cuda.list
 
-# Install Mellanox OFED runtime dependencies.
+# Install Mellanox OFED runtime and development dependencies.
 
 RUN apt-get update && apt-get install -y --no-install-recommends gnupg \
     && wget -qO - "https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox" | apt-key add - \
     && mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d "https://linux.mellanox.com/public/repo/mlnx_ofed/5.3-1.0.0.1/ubuntu20.04/mellanox_mlnx_ofed.list" \
     && apt-get update -y && apt-get install -y --no-install-recommends \
         ibverbs-providers ibverbs-utils \
-        libibmad5 libibumad3 libibverbs1 librdmacm1 \
+        libibmad5 libibumad3 libibverbs-dev libibverbs1 librdmacm1 \
     && rm /etc/apt/trusted.gpg && rm /etc/apt/sources.list.d/mellanox_mlnx_ofed.list \
     && apt-get remove -y gnupg \
     && apt-get autoremove -y --purge && apt-get clean && rm -rf /var/lib/apt/lists/* 

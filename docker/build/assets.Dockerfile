@@ -41,7 +41,7 @@ RUN dnf install -y --nobest --setopt=install_weak_deps=False ${PYTHON}
 
 # [Build Dependencies]
 RUN dnf install -y --nobest --setopt=install_weak_deps=False wget git unzip epel-release && \
-    dnf install -y --nobest --setopt=install_weak_deps=False ccache
+    dnf install -y --nobest --setopt=install_weak_deps=False ccache rdma-core-devel
 
 ## [CUDA]
 RUN source /cuda-quantum/scripts/configure_build.sh install-cuda
@@ -106,6 +106,7 @@ ADD "docs/sphinx/targets" /cuda-quantum/docs/sphinx/targets
 ADD "docs/sphinx/snippets" /cuda-quantum/docs/sphinx/snippets
 ADD "cudaq" /cuda-quantum/cudaq
 ADD "runtime" /cuda-quantum/runtime
+ADD "realtime" /cuda-quantum/realtime
 ADD "scripts/build_cudaq.sh" /cuda-quantum/scripts/build_cudaq.sh
 ADD "scripts/migrate_assets.sh" /cuda-quantum/scripts/migrate_assets.sh
 ADD "scripts/cudaq_set_env.sh" /cuda-quantum/scripts/cudaq_set_env.sh
@@ -155,7 +156,9 @@ RUN cd /cuda-quantum && source scripts/configure_build.sh && \
     CUDAQ_WERROR=TRUE \
     CUDAQ_PYTHON_SUPPORT=OFF \
     LLVM_PROJECTS='clang;flang;lld;mlir;openmp;runtimes' \
-    bash scripts/build_cudaq.sh -t llvm -v -- -DCUDAQ_ENABLE_PASQAL_QRMI_CONNECTOR=OFF && \
+    bash scripts/build_cudaq.sh -t llvm -v -- \
+        -DCUDAQ_ENABLE_PROJECTS='cudaq;runtime;realtime' \
+        -DCUDAQ_ENABLE_PASQAL_QRMI_CONNECTOR=OFF && \
     echo "=== ccache stats (cpp_build) ===" && (ccache -s 2>/dev/null || true) && \
     (ccache --print-stats 2>/dev/null || ccache -s 2>/dev/null) > /root/.ccache/_build_stats.txt
     ## [<CUDAQuantumCppBuild]
@@ -196,6 +199,7 @@ ADD "python" /cuda-quantum/python
 ADD "cmake" /cuda-quantum/cmake
 ADD "cudaq" /cuda-quantum/cudaq
 ADD "runtime" /cuda-quantum/runtime
+ADD "realtime" /cuda-quantum/realtime
 ADD "tpls/customizations" /cuda-quantum/tpls/customizations
 ADD "tpls/json" /cuda-quantum/tpls/json
 ADD "utils" /cuda-quantum/utils
