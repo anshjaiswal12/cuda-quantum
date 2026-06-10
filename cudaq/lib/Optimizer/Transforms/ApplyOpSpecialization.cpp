@@ -545,6 +545,13 @@ public:
     auto &funcBody = func.getBody();
 
     // Check our restrictions.
+    if (func.isDeclaration()) {
+      func.emitError() << "cannot make adjoint of kernel '" << func.getName()
+                       << "' because its body is unavailable";
+      signalPassFailure();
+      return failure();
+    }
+
     if (regionHasUnstructuredControlFlow(funcBody)) {
       LLVM_DEBUG(
           llvm::dbgs()
