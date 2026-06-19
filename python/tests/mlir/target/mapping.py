@@ -27,10 +27,10 @@ result = cudaq.sample(foo)
 
 print('most_probable "{}"'.format(result.most_probable()))
 
-# CHECK:         tail call void @__quantum__qis__x__body(ptr null)
 # CHECK:         tail call void @__quantum__qis__x__body(ptr nonnull inttoptr (i64 1 to ptr))
-# CHECK:         tail call void @__quantum__qis__cnot__body(ptr null, ptr nonnull inttoptr (i64 1 to ptr))
-# CHECK:         tail call void @__quantum__qis__swap__body(ptr null, ptr nonnull inttoptr (i64 1 to ptr))
+# CHECK:         tail call void @__quantum__qis__x__body(ptr null)
+# CHECK:         tail call void @__quantum__qis__cnot__body(ptr nonnull inttoptr (i64 1 to ptr), ptr null)
+# CHECK-NOT:     tail call void @__quantum__qis__swap__body
 # CHECK:         tail call void @__quantum__qis__cnot__body(ptr nonnull inttoptr (i64 1 to ptr), ptr nonnull inttoptr (i64 2 to ptr))
 # CHECK:         tail call void @__quantum__qis__mz__body(ptr nonnull inttoptr (i64 1 to ptr), ptr writeonly null)
 # CHECK:         tail call void @__quantum__qis__mz__body(ptr null, ptr nonnull writeonly inttoptr (i64 1 to ptr))

@@ -127,8 +127,13 @@ private:
         // of qubits.
         if (data.allocationOffsets.find(callOp) ==
             data.allocationOffsets.end()) {
-          data.allocationOffsets[callOp] = data.nQubits;
-          data.nQubits += incrementBy();
+          auto increment = incrementBy();
+          std::size_t offset = data.nQubits;
+          if (auto offsetAttr = dyn_cast_if_present<IntegerAttr>(
+                  callOp->getAttr(cudaq::opt::StartingOffsetAttrName)))
+            offset = offsetAttr.getValue().getLimitedValue();
+          data.allocationOffsets[callOp] = offset;
+          data.nQubits = std::max(data.nQubits, offset + increment);
         }
       };
 

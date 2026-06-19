@@ -230,8 +230,10 @@ struct AllocaOpToCallsRewrite
       StringRef qirQubitAllocate = cudaq::opt::QIRQubitAllocate;
       Type qubitTy = M::getQubitType(rewriter.getContext());
 
-      rewriter.replaceOpWithNewOp<func::CallOp>(alloc, TypeRange{qubitTy},
-                                                qirQubitAllocate, ValueRange{});
+      auto call = rewriter.replaceOpWithNewOp<func::CallOp>(
+          alloc, TypeRange{qubitTy}, qirQubitAllocate, ValueRange{});
+      if (auto attr = alloc->getAttr(cudaq::opt::StartingOffsetAttrName))
+        call->setAttr(cudaq::opt::StartingOffsetAttrName, attr);
       return success();
     }
 
@@ -263,9 +265,11 @@ struct AllocaOpToCallsRewrite
     }
 
     // Replace the AllocaOp with the QIR call.
-    rewriter.replaceOpWithNewOp<func::CallOp>(alloc, TypeRange{arrayQubitTy},
-                                              qirQubitArrayAllocate,
-                                              ValueRange{sizeOperand});
+    auto call = rewriter.replaceOpWithNewOp<func::CallOp>(
+        alloc, TypeRange{arrayQubitTy}, qirQubitArrayAllocate,
+        ValueRange{sizeOperand});
+    if (auto attr = alloc->getAttr(cudaq::opt::StartingOffsetAttrName))
+      call->setAttr(cudaq::opt::StartingOffsetAttrName, attr);
     return success();
   }
 };
@@ -2902,8 +2906,14 @@ struct QuakeToQIRAPIPrepPass
           if (auto alloc = dyn_cast<cudaq::quake::AllocaOp>(op)) {
             auto allocTy = alloc.getType();
             if (isa<cudaq::quake::RefType>(allocTy)) {
-              alloc->setAttr(cudaq::opt::StartingOffsetAttrName,
-                             builder.getI64IntegerAttr(totalQubits++));
+              if (auto offsetAttr = dyn_cast_if_present<IntegerAttr>(
+                      alloc->getAttr(cudaq::opt::StartingOffsetAttrName))) {
+                auto offset = offsetAttr.getValue().getLimitedValue();
+                totalQubits = std::max(totalQubits, offset + 1);
+              } else {
+                alloc->setAttr(cudaq::opt::StartingOffsetAttrName,
+                               builder.getI64IntegerAttr(totalQubits++));
+              }
               return;
             }
             if (!isa<cudaq::quake::VeqType>(allocTy)) {
@@ -2915,9 +2925,16 @@ struct QuakeToQIRAPIPrepPass
               alloc.emitOpError("must have a constant size.");
               return;
             }
-            alloc->setAttr(cudaq::opt::StartingOffsetAttrName,
-                           builder.getI64IntegerAttr(totalQubits));
-            totalQubits += veqTy.getSize();
+            if (auto offsetAttr = dyn_cast_if_present<IntegerAttr>(
+                    alloc->getAttr(cudaq::opt::StartingOffsetAttrName))) {
+              auto offset = offsetAttr.getValue().getLimitedValue();
+              totalQubits =
+                  std::max<std::size_t>(totalQubits, offset + veqTy.getSize());
+            } else {
+              alloc->setAttr(cudaq::opt::StartingOffsetAttrName,
+                             builder.getI64IntegerAttr(totalQubits));
+              totalQubits += veqTy.getSize();
+            }
             return;
           }
           if (auto nw = dyn_cast<cudaq::quake::NullWireOp>(op)) {
