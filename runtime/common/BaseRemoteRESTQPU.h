@@ -489,7 +489,6 @@ public:
       cudaq::ExecutionContext context("sample", localShots);
       sample_policy localPolicy;
       localPolicy.options.shots = localShots;
-      localPolicy.reorderIdx = std::move(codes[i].mapping_reorder_idx);
       localPolicy.kernelName = kernelName;
       assert(codes[i].jit);
       auto result = detail::with_policy_and_ctx(localPolicy, context, [&]() {
@@ -547,7 +546,6 @@ public:
       cudaq::ExecutionContext context("sample", localShots);
       sample_policy localPolicy;
       localPolicy.options.shots = localShots;
-      localPolicy.reorderIdx = std::move(codes[i].mapping_reorder_idx);
       localPolicy.kernelName = kernelName;
       assert(codes[i].jit);
       auto result = detail::with_policy_and_ctx(localPolicy, context, [&]() {
