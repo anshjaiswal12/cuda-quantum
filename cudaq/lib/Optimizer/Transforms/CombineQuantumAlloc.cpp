@@ -128,6 +128,7 @@ public:
     // any of them are parametric.
     Analysis analysis;
     std::optional<std::size_t> startingOffset;
+    bool hasUnannotatedAllocation = false;
     std::size_t currentOffset = 0;
     for (auto &block : func.getRegion())
       for (auto &op : block) {
@@ -141,6 +142,8 @@ public:
             continue;
           if (auto offsetAttr = dyn_cast_if_present<IntegerAttr>(
                   alloc->getAttr(cudaq::opt::StartingOffsetAttrName))) {
+            if (hasUnannotatedAllocation)
+              return;
             auto offset = offsetAttr.getValue().getLimitedValue();
             if (!startingOffset) {
               if (offset < currentOffset)
@@ -151,6 +154,8 @@ public:
             }
           } else if (startingOffset) {
             return;
+          } else {
+            hasUnannotatedAllocation = true;
           }
           analysis.allocations.push_back(alloc);
           analysis.offsetSizes.emplace_back(currentOffset, size);
